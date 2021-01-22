@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+  input[type=text], select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+    
+input[type=submit] {
+  width: 100%;
+  background-color: #4CAF50
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type=submit]:hover {
+  background-color: #45a049;
+}
+
+div {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 20px;
+  margin: 40px;
+}
+</style>
+</head>
+<body>
+
+<h2>Preencha os dados a seguir</h2>
+  <div>
+  <form action="inst.html">
+    <label for="fname">Nome</label>
+    <input type="text" id="fname" name="firstname" placeholder="Seu Nome..">
+
+    <label for="age">Idade</label>
+    <input type="text" id="age" name="idade" placeholder="Sua Idade..">
+
+    <label for="genero">Gênero</label>
+    <select name="Genero" id="Genero">
+          <option value="">Escolher</option>
+          <option value="Feminino">Feminino</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Outros">Outros</option>
+      <option value="Não responder">Não responder</option>
+    
+      
+      </select>
+    
+  
+    <input type="submit" value="Avançar">
+  </form>
+</div>
+</body>
+</html>
