@@ -2,12 +2,16 @@
 <html>
 <head>
     <title>Projeto contexto</title>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projeto contexto</title>
 </head>
 <body>
 <p style="text-align: center;">
     <button type="button" onclick="setEnglish()">English</button>
-    <button type="button">Espanhol</button>
-    <button type="button">Português</button>
+    <button type="button" onclick="setEspanhol()">Espanhol</button>
+    <button type="button" onclick="setPortuguês()">Português</button>
 </p>
 <br>
 <br>
@@ -22,15 +26,29 @@
   </span>
 </p>
 
-
-
 <script>
     function setEnglish() {
         document.getElementById("linkIniciar").text = "Start";
         document.getElementById("linkIniciar").href = "tcle.html?lang=en";
 
         document.getElementById("linkAutores").text = "Authors";
-        document.getElementById("linkIniciar").href = "auores.html?lang=pt";
+        document.getElementById("linkAutores").href = "autores.html?lang=en";
+        }
+        
+    function setEspanhol() {
+        document.getElementById("linkIniciar").text = "Iniciar";
+        document.getElementById("linkIniciar").href = "tcle.html?lang=es";
+
+        document.getElementById("linkAutores").text = "Autores";
+        document.getElementById("linkAutores").href = "autores.html?lang=es";
+    }    
+    
+    function setPortuguês(){
+    document.getElementById("linkIniciar").text = "Iniciar";
+        document.getElementById("linkIniciar").href = "tcle.html?lang=pt";
+
+        document.getElementById("linkAutores").text = "Autores";
+        document.getElementById("linkAutores").href = "autores.html?lang=pt";
     }
 </script>
 
