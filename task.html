@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <title>Projeto contexto</title>
+
+</head>
+<body>
+<div id="divVariables"></div>
+<div id="divTask">
+    <div id="divReforco">
+        <h1>+ R$ 0,10</h1>
+        <img src="reforco.gif" alt="+">
+    </div>
+    <div id="divTop">
+        <button id="btnToogleDivVariables" type="button" onclick="toggleDivVariables()">Show/Hide Variables</button>
+        <button id="btnChangeOverLeft" type="button" onclick="onClickBtnChangeOverLeft()">Trocar L</button>
+        <button id="btnChangeOverRight" type="button" onclick="onClickBtnChangeOverRight()">Trocar R</button>
+        <button id="btnConsumirReforcador" type="button" onclick="onClickConsumatoryButton()">Pegar</button>
+    </div>
+
+    <div id="divLeft">
+        <button id="btnOperando1" type="button" onclick="onClickOperando1()">1x</button>
+        <button id="btnOperando2" type="button" onclick="onClickOperando2()">2</button>
+    </div>
+
+    <div id="divRight">
+        <button id="btnOperando3" type="button" onclick="onClickOperando3()">3</button>
+        <button id="btnOperando4" type="button" onclick="onClickOperando4()">4</button>
+    </div>
+</div>
+
+</body>
+</html>
+
+<script>
+    let schedule_1;
+    let schedule_2;
+    let schedule_3;
+    let schedule_4;
+
+    let db;
+    let component;
+
+    let reinforcer_control;
+
+    let current_schedule = 0;
+    let left_onset_schedule = 1;
+    let right_onset_schedule = 1;
+
+    // Cria variáveis que "representam os objetos HTML"
+    let divTask = document.getElementById("divTask");
+    let divReforco = document.getElementById("divReforco");
+    let divTop = document.getElementById("divTop");
+    let divLeft = document.getElementById("divLeft");
+    let divRight = document.getElementById("divRight");
+    let divVariables = document.getElementById("divVariables");
+    let btnOperando1 = document.getElementById("btnOperando1");
+    let btnOperando2 = document.getElementById("btnOperando2");
+    let btnOperando3 = document.getElementById("btnOperando3");
+    let btnOperando4 = document.getElementById("btnOperando4");
+    let btnConsumirReforcador = document.getElementById("btnConsumirReforcador");
+    let btnChangeOverLeft = document.getElementById("btnChangeOverLeft");
+    let btnChangeOverRight = document.getElementById("btnChangeOverRight");
+
+    class Schedule {
+        constructor(object) {
+            this.object_name = object;
+
+            if (this.object_name === 'btnOperando1') this.intervals = [ 5, 7, 8, 4];
+            if (this.object_name === 'btnOperando2') this.intervals = [ 7, 4, 5, 8];
+            if (this.object_name === 'btnOperando3') this.intervals = [ 3, 4, 6, 7];
+            if (this.object_name === 'btnOperando4') this.intervals = [ 8, 7, 5, 6];
+
+            this.current_interval = [];
+
+            this.label = '';
+            this.clock = 0;
+            this.clock_paused = false;
+
+            this.time = 0;
+            this.time_unit = 100;
+
+
+            this.responses = 0;
+            this.reinforcers = 0;
+            this.reinforcers_missed = 0;
+
+            this.reinforcer_status = false; // unavailable
+            this.object = document.getElementById(object);
+            this.background_color = this.object.style.backgroundColor;
+        }
+
+        start() {
+            this.startClock();
+        }
+
+        setLabel (label) {
+            this.label = label;
+        }
+
+        startClock() {
+            this.time = 0;
+            this.reinforcer_status = false;
+            this.setCurrentInterval();
+            this.clock = setInterval(() => this.addTime(), this.time_unit);
+        }
+
+        stopClock() {
+            clearInterval(this.clock);
+        }
+
+        pauseClock() {
+            this.clock_paused = true;
+        }
+
+        resumeClock() {
+            this.clock_paused = false;
+        }
+
+        addTime() {
+            if (!this.clock_paused) {
+                this.time += 100;
+            }
+            if (this.time >= (this.current_interval * 1000)) this.reinforcer_status = true;
+        }
+
+        getTime() {
+            return this.time / this.time_unit;
+        }
+
+        addResponse() {
+            this.responses += 1;
+        }
+
+        getResponses() {
+            return this.responses;
+        }
+
+        addReinforcer() {
+            this.reinforcers += 1;
+        }
+
+        addReinforcerMissed() {
+            this.reinforcers_missed += 1;
+        }
+
+        showFeedbackColor() {
+            this.object.style.background = 'gray';
+            setTimeout(() => this.hideFeedbackColor(), 100);
+        }
+
+        hideFeedbackColor() {
+            this.object.style.background = this.background_color;
+        }
+
+        getReinforcerStatus() {
+            return this.reinforcer_status;
+        }
+
+        setCurrentInterval () {
+            let interval = 0;
+            let array_size = this.intervals.length;
+            let index = 0;
+
+            index = Math.floor((Math.random() * array_size) + 1);
+            index = index - 1;
+            interval = this.intervals[index];
+            this.intervals.splice(index, 1); // remove item da array
+            this.current_interval = interval;
+
+            if (this.intervals.length === 0) {
+                if (this.object_name === 'btnOperando1') this.intervals = [ 5, 7, 8, 4];
+                if (this.object_name === 'btnOperando2') this.intervals = [ 7, 4, 5, 8];
+                if (this.object_name === 'btnOperando3') this.intervals = [ 3, 4, 6, 7];
+                if (this.object_name === 'btnOperando4') this.intervals = [ 8, 7, 5, 6];
+            }
+        }
+
+        getVariables() {
+            let variables = [];
+            variables.push(this.label);
+            variables.push("--------------");
+            variables.push("Clock: " + this.getTime());
+            variables.push("Responses: " + this.getResponses());
+            variables.push("Reinforcers: " + this.reinforcers);
+            variables.push("Reinforcers missed: " + this.reinforcers_missed);
+            variables.push("Reinforcer Status: " + this.reinforcer_status);
+            variables.push("Current interval: " + this.current_interval);
+            variables.push("Intervals: " + this.intervals);
+            variables.push("<br>");
+
+            variables = variables.join("<br>");
+            return variables;
+        }
+    }
+
+    class Reinforcer {
+        constructor() {
+            this.reinforcer_lh = 0;
+        }
+
+        showKey() {
+            btnConsumirReforcador.style.display = "block";
+            divLeft.style.display = "none";
+            divRight.style.display = "none";
+            component.pauseClock();
+            this.reinforcer_lh = setInterval(() => this.endLH(), 2000);
+        }
+
+        endLH() {
+            clearInterval(this.reinforcer_lh);
+            this.hideKey();
+            if (current_schedule === 1) schedule_1.addReinforcerMissed();
+            if (current_schedule === 2) schedule_2.addReinforcerMissed();
+            if (current_schedule === 3) schedule_3.addReinforcerMissed();
+            if (current_schedule === 4) schedule_4.addReinforcerMissed();
+            resumeScheduleAfterReinforcement();
+        }
+
+        hideKey() {
+            btnConsumirReforcador.style.display = "none";
+            if (current_schedule === 1 || current_schedule === 2) divLeft.style.display = "block";
+            if (current_schedule === 3 || current_schedule === 4) divRight.style.display = "block";
+        }
+
+        showReinforcer() {
+            clearInterval(this.reinforcer_lh);
+            btnConsumirReforcador.style.display = "none";
+            divTop.style.display = "none";
+            divReforco.style.display = "block";
+            setTimeout(() => this.hideReinforcer(), 2000);
+        }
+
+        hideReinforcer() {
+            divReforco.style.display = "none";
+            divTop.style.display = "block";
+
+            if (current_schedule === 1 || current_schedule === 2) divLeft.style.display = "block";
+            if (current_schedule === 3 || current_schedule === 4) divRight.style.display = "block";
+            resumeScheduleAfterReinforcement();
+        }
+
+    }
+
+    class ComponentControler {
+        constructor() {
+            this.current_componet =  Math.floor((Math.random() * 2) + 1);
+            this.current_interval = 0;
+            this.component_clock = 0;
+            this.clock_paused = false;
+            this.clock_time = 0;
+            this.intervals = [3, 4, 3, 3, 4, 2, 3, 3];
+        }
+
+        start() {
+            this.current_interval = 5;
+            this.changeComponent();
+            this.component_clock = setInterval(() => this.addClockTime(), 100);
+        }
+
+        addClockTime() {
+            if (!this.clock_paused) this.clock_time += 100;
+            if (this.clock_time >= this.current_interval * 1000) {
+                this.clock_time = 0;
+                this.changeComponent()
+            }
+        }
+
+        pauseClock() {
+            this.clock_paused = true;
+        }
+
+        resumeClock() {
+            this.clock_paused = false;
+        }
+
+        changeComponent() {
+            if (this.current_componet === 1) {
+                this.current_componet = 2;
+                btnChangeOverRight.style.display = "block";
+                btnChangeOverLeft.style.display = "none";
+                divRight.style.display = 'block';
+                divLeft.style.display = 'none';
+
+                schedule_1.pauseClock();
+                schedule_2.pauseClock();
+                schedule_3.resumeClock();
+                schedule_4.resumeClock();
+
+            } else {
+                this.current_componet = 1;
+                btnChangeOverRight.style.display = "none";
+                btnChangeOverLeft.style.display = "block";
+                divRight.style.display = 'none';
+                divLeft.style.display = 'block';
+
+                schedule_1.resumeClock();
+                schedule_2.resumeClock();
+                schedule_3.pauseClock();
+                schedule_4.pauseClock();
+            }
+
+        }
+    }
+    class Dashboard {
+        constructor() {
+            this.object = document.getElementById("divVariables");
+            this.output = [];
+            this.output.push('aaa');
+
+            this.interval = 0;
+            this.refresh_interval = 100;
+        }
+
+        toggle() {
+            if (this.object.style.display === '') this.object.style.display = 'none';
+
+            if (this.object.style.display === "none") {
+                this.object.style.display = "block";
+                divTask.style.left = "30%";
+                divTask.style.width = "65%";
+            } else {
+                this.object.style.display = "none";
+                divTask.style.left = "5%";
+                divTask.style.width = "90%";
+            }
+        }
+
+        print () {
+            let html = [];
+            html.push(schedule_1.getVariables());
+            html.push(schedule_2.getVariables());
+            html.push(schedule_3.getVariables());
+            html.push(schedule_4.getVariables());
+            this.object.innerHTML = html.join("<br>");
+        }
+
+        startRefresh() {
+            this.interval = setInterval(() => this.print(), 100);
+        }
+    }
+
+    function setElementsStyle() {
+        // configuração do painel geral
+        divTask.style.position = "absolute";
+        divTask.style.outline = "1px solid";
+        divTask.style.top = "5%";
+        divTask.style.left = "5%";
+        divTask.style.width = "90%";
+        divTask.style.height = "90%";
+
+        // configuração do painel superior
+        divTop.style.position = "absolute";
+        divTop.style.outline = "1px solid";
+        divTop.style.top = "5%";
+        divTop.style.left = "5%";
+        divTop.style.width = "90%";
+        divTop.style.height = "10%";
+
+        // configuração do painel de reforço
+        divReforco.style.position = "absolute";
+        divReforco.style.outline = "1px solid";
+        divReforco.style.top = "25%";
+        divReforco.style.left = "37%";
+        divReforco.style.width = "25%";
+        divReforco.style.height = "25%";
+        divReforco.style.display = "none";
+        divReforco.style.textAlign = "center";
+
+        // configuração do painel esquerdo
+        divLeft.style.position = "absolute";
+        divLeft.style.outline = "1px solid";
+        divLeft.style.top = "20%";
+        divLeft.style.left = "5%";
+        divLeft.style.width = "43%";
+        divLeft.style.height = "75%";
+
+        // configuração do painel direito
+        divRight.style.position = "absolute";
+        divRight.style.outline = "1px solid";
+        divRight.style.top = "20%";
+        divRight.style.left = "50%";
+        divRight.style.width = "45%";
+        divRight.style.height = "75%";
+
+        // configuração do painel de variáveis
+        divVariables.style.position = "absolute";
+        divVariables.style.outline = "1px solid";
+        divVariables.style.top = "5%";
+        divVariables.style.left = "5%";
+        divVariables.style.width = "25%";
+        divVariables.style.height = "90%";
+        divVariables.style.display = "none";
+
+        // configuração do Operando 1
+        btnOperando1.style.position = "absolute";
+
+        btnOperando1.style.background='red';
+        btnOperando1.style.top = "50%";
+        btnOperando1.style.left = "50%";
+        btnOperando1.style.width = "10%";
+        btnOperando1.style.height = "10%";
+
+        // configuração do Operando 2
+        btnOperando2.style.position = "absolute";
+        btnOperando2.style.background='yellow';
+        btnOperando2.style.top = "50%";
+        btnOperando2.style.left = "40%";
+        btnOperando2.style.width = "10%";
+        btnOperando2.style.height = "10%";
+
+        // configuração do Operando 3
+        btnOperando3.style.position = "absolute";
+        btnOperando3.style.background='blue';
+        btnOperando3.style.top = "50%";
+        btnOperando3.style.left = "50%";
+        btnOperando3.style.width = "10%";
+        btnOperando3.style.height = "10%";
+
+        // configuração do Operando 4
+        btnOperando4.style.position = "absolute";
+        btnOperando4.style.background='green';
+        btnOperando4.style.top = "50%";
+        btnOperando4.style.left = "40%";
+        btnOperando4.style.width = "10%";
+        btnOperando4.style.height = "10%";
+
+        // configuração do Botão de consumo
+        btnConsumirReforcador.style.position = "absolute";
+        btnConsumirReforcador.style.background='white';
+        btnConsumirReforcador.style.top = "10%";
+        btnConsumirReforcador.style.left = "45%";
+        btnConsumirReforcador.style.width = "10%";
+        btnConsumirReforcador.style.height = "70%";
+        btnConsumirReforcador.style.display = "none";
+
+        btnChangeOverLeft.style.position = "absolute";
+        btnChangeOverLeft.style.background='white';
+        btnChangeOverLeft.style.top = "10%";
+        btnChangeOverLeft.style.left = "15%";
+        btnChangeOverLeft.style.width = "10%";
+        btnChangeOverLeft.style.height = "70%";
+        btnChangeOverLeft.style.display = "block";
+
+        btnChangeOverRight.style.position = "absolute";
+        btnChangeOverRight.style.background='white';
+        btnChangeOverRight.style.top = "10%";
+        btnChangeOverRight.style.left = "75%";
+        btnChangeOverRight.style.width = "10%";
+        btnChangeOverRight.style.height = "70%";
+        btnChangeOverRight.style.display = "block";
+    }
+
+    document.addEventListener("DOMContentLoaded", onDocumentReady);
+    function onDocumentReady() {
+        setElementsStyle();
+
+        let rnd_number_1 = Math.floor((Math.random() * 2) + 1);
+        let rnd_number_2 = Math.floor((Math.random() * 2) + 1);
+
+        if (rnd_number_1 === 1) {
+            right_onset_schedule = 1;
+            btnOperando3.style.display = 'block';
+            btnOperando4.style.display = 'none';
+        } else {
+            right_onset_schedule = 2;
+            btnOperando3.style.display = 'none';
+            btnOperando4.style.display = 'block';
+        }
+
+        if (rnd_number_2 === 1) {
+            left_onset_schedule = 1;
+            btnOperando1.style.display = 'block';
+            btnOperando2.style.display = 'none';
+        } else {
+            left_onset_schedule = 2;
+            btnOperando1.style.display = 'none';
+            btnOperando2.style.display = 'block';
+        }
+
+        schedule_1 = new Schedule("btnOperando1");
+        schedule_1.setLabel("Schedule 1");
+        schedule_1.start();
+
+        schedule_2 = new Schedule("btnOperando2");
+        schedule_2.setLabel("Schedule 2");
+        schedule_2.start();
+
+        schedule_3 = new Schedule("btnOperando3");
+        schedule_3.setLabel("Schedule 3");
+        schedule_3.start();
+
+        schedule_4 = new Schedule("btnOperando4");
+        schedule_4.setLabel("Schedule 4");
+        schedule_4.start();
+
+        db = new Dashboard();
+        db.startRefresh();
+
+        component = new ComponentControler();
+        component.start();
+
+        reinforcer_control = new Reinforcer();
+    }
+
+    function onClickOperando1() {
+        current_schedule = 1;
+        schedule_1.addResponse();
+        schedule_1.showFeedbackColor();
+        if (schedule_1.getReinforcerStatus()) {
+            schedule_1.stopClock();
+            reinforcer_control.showKey();
+        }
+    }
+
+    function onClickOperando2() {
+        current_schedule = 2;
+        schedule_2.addResponse();
+        schedule_2.showFeedbackColor();
+        if (schedule_2.getReinforcerStatus()) {
+            schedule_2.stopClock();
+            reinforcer_control.showKey();
+        }
+    }
+
+    function onClickOperando3() {
+        current_schedule = 3;
+        schedule_3.addResponse();
+        schedule_3.showFeedbackColor();
+        if (schedule_3.getReinforcerStatus()) {
+            schedule_3.stopClock();
+            reinforcer_control.showKey();
+        }
+    }
+
+    function onClickOperando4() {
+        current_schedule = 4;
+        schedule_4.addResponse();
+        schedule_4.showFeedbackColor();
+        if (schedule_4.getReinforcerStatus()) {
+            schedule_4.stopClock();
+            reinforcer_control.showKey();
+        }
+    }
+
+    function onClickConsumatoryButton() {
+        if (current_schedule === 1) schedule_1.addReinforcer();
+        if (current_schedule === 2) schedule_2.addReinforcer();
+        if (current_schedule === 3) schedule_3.addReinforcer();
+        if (current_schedule === 4) schedule_4.addReinforcer();
+        reinforcer_control.showReinforcer();
+    }
+
+
+    function onClickBtnChangeOverRight() {
+        if (right_onset_schedule === 1) {
+            right_onset_schedule = 2;
+            btnOperando3.style.display = 'none';
+            btnOperando4.style.display = 'block';
+        } else {
+            right_onset_schedule = 1;
+            btnOperando3.style.display = 'block';
+            btnOperando4.style.display = 'none';
+        }
+    }
+
+    function onClickBtnChangeOverLeft() {
+        if (left_onset_schedule === 1) {
+            left_onset_schedule = 2;
+            btnOperando1.style.display = 'none';
+            btnOperando2.style.display = 'block';
+        } else {
+            left_onset_schedule = 1;
+            btnOperando1.style.display = 'block';
+            btnOperando2.style.display = 'none';
+        }
+    }
+
+
+    function resumeScheduleAfterReinforcement() {
+        if (current_schedule === 1) schedule_1.startClock();
+        if (current_schedule === 2) schedule_2.startClock();
+        if (current_schedule === 3) schedule_3.startClock();
+        if (current_schedule === 4) schedule_4.startClock();
+
+        component.resumeClock();
+    }
+
+    function toggleDivVariables() {
+        db.toggle();
+    }
+</script>
