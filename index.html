@@ -6,8 +6,8 @@
 <body>
 <p style="text-align: center;">
     <button type="button" onclick="setEnglish()">English</button>
-    <button type="button">Espanhol</button>
-    <button type="button">Português</button>
+    <button type="button" onclick="setEspanholh()">Espanhol</button>
+    <button type="button" onclick="setPortuguês()">Português</button>
 </p>
 <br>
 <br>
@@ -27,10 +27,35 @@
 <script>
     function setEnglish() {
         document.getElementById("linkIniciar").text = "Start";
+        document.getElementById("linkIniciar").href = "tcleEN.html?lang=en";
+
+        document.getElementById("linkAutores").text = "Authors";
+        document.getElementById("linkIniciar").href = "authors.html?lang=pt";
+        
+        document.getElementById("linkSobre").text = "About";
+        document.getElementById("linkIniciar").href = "about.html?lang=pt";
+    }
+    
+     function setEspanhol() {
+        document.getElementById("linkIniciar").text = "Iniciar";
+        document.getElementById("linkIniciar").href = "tcleES.html?lang=en";
+
+        document.getElementById("linkAutores").text = "Autores";
+        document.getElementById("linkIniciar").href = "autoresES.html?lang=pt";
+         
+        document.getElementById("linkSobre").text = "Sobre";
+        document.getElementById("linkIniciar").href = "sobreES.html?lang=pt";
+    }
+    
+     function setPortuguês() {
+        document.getElementById("linkIniciar").text = "Iniciar";
         document.getElementById("linkIniciar").href = "tcle.html?lang=en";
 
         document.getElementById("linkAutores").text = "Authors";
         document.getElementById("linkIniciar").href = "auores.html?lang=pt";
+         
+        document.getElementById("linkSobre").text = "Sobre";
+        document.getElementById("linkIniciar").href = "sobre.html?lang=pt";
     }
 </script>
 
